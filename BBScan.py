@@ -225,7 +225,6 @@ class InfoDisScanner(object):
                 continue
             _m = re_text.search(line)
             if _m:
-                # TODO:
                 try:
                     self.text_to_find.append(
                         _m.group(1).decode('utf-8', 'ignore')
@@ -237,7 +236,6 @@ class InfoDisScanner(object):
             else:
                 _m = re_regex_text.search(line)
                 if _m:
-                    # TODO:
                     try:
                         self.regex_to_find.append(
                             re.compile(_m.group(1).decode('utf-8', 'ignore'))
@@ -256,7 +254,6 @@ class InfoDisScanner(object):
                 continue
             _m = re_text.search(line)
             if _m:
-                # TODO:
                 try:
                     self.text_to_exclude.append(
                         _m.group(1).decode('utf-8', 'ignore')
@@ -268,7 +265,6 @@ class InfoDisScanner(object):
             else:
                 _m = re_regex_text.search(line)
                 if _m:
-                    # TODO:
                     try:
                         self.regex_to_exclude.append(
                             re.compile(_m.group(1).decode('utf-8', 'ignore'))
