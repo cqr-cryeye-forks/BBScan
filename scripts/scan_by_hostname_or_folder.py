@@ -41,7 +41,7 @@ def do_check(self, url):
     elif url != '/':
         # sub folders like /aaa/bbb/
         folder_name = url.split('/')[-2]
-        url_prefix = url[: -len(folder_name)-1]
+        url_prefix = url[: -len(folder_name) - 1]
         for ext in extensions:
             status, headers, html_doc = self._http_request(url_prefix + folder_name + ext)
             if status == 206 and headers.get('content-type', '').find('application/octet-stream') >= 0:

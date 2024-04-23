@@ -1,4 +1,3 @@
-
 from lib.common import save_user_script_result
 
 folders = """
@@ -54,7 +53,6 @@ def do_check(self, url):
     if url != '/' or not self.conn_pool or self._404_status == 301:
         return
 
-
     _folders = folders.split()
 
     for _url in _folders:
@@ -69,4 +67,3 @@ def do_check(self, url):
         if status == 206 and self._404_status != 206:
             save_user_script_result(self, status, self.base_url + _url,
                                     'Possible Sensitive File Found')
-

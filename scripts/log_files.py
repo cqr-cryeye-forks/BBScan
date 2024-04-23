@@ -38,8 +38,8 @@ def do_check(self, url):
                                         'Log File Found')
 
         url_lst = ['access.log', 'www.log', 'error.log', 'log.log', 'sql.log',
-                   'errors.log', 'debug.log', 'db.log','install.log',
-                   'server.log', 'sqlnet.log','WS_FTP.log', 'database.log', 'data.log', 'app.log',
+                   'errors.log', 'debug.log', 'db.log', 'install.log',
+                   'server.log', 'sqlnet.log', 'WS_FTP.log', 'database.log', 'data.log', 'app.log',
                    '/log.tar.gz', '/log.rar', '/log.zip',
                    '/log.tgz', '/log.tar.bz2', '/log.7z']
 

@@ -5,8 +5,8 @@
 
 
 import argparse
-import sys
 import os
+import sys
 
 
 def parse_args():
@@ -15,6 +15,9 @@ def parse_args():
                                      description='* A tiny Batch weB+ vulnerability Scanner. *\n'
                                                  'By LiJieJie (http://www.lijiejie.com)',
                                      usage='BBScan.py [options]')
+
+    parser.add_argument('--output', '-o',
+                        help='Where to save output in json format')
 
     parser.add_argument('--host', metavar='HOST [HOST2 HOST3 ...]', type=str, default='', nargs='*',
                         help='Scan several hosts from command line')
@@ -78,18 +81,18 @@ def check_args(args):
               '-d TargetDirectory \n           ' \
               '--crawler TargetDirectory \n           ' \
               '--host www.host1.com www.host2.com 8.8.8.8'
-        print msg
+        print(msg)
         exit(-1)
 
     if args.f and not os.path.isfile(args.f):
-        print 'TargetFile not found: %s' % args.f
+        print('TargetFile not found: %s' % args.f)
         exit(-1)
 
     if args.d and not os.path.isdir(args.d):
-        print 'TargetDirectory not found: %s' % args.f
+        print('TargetDirectory not found: %s' % args.f)
         exit(-1)
 
     args.network = int(args.network)
     if not (24 <= args.network <= 32):
-        print 'Network must be an integer between 24 and 31'
+        print('Network must be an integer between 24 and 31')
         exit(-1)

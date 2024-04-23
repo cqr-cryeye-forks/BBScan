@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import pymongo
+
 from lib.common import save_user_script_result
 
 

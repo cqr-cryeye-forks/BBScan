@@ -21,7 +21,7 @@ def do_check(self, url):
                        '/wp-config.php.bak']
             for _url in url_lst:
                 status, headers, html_doc = self._http_request(_url)
-                print _url
+                print(_url)
                 if status == 200 or status == 206:
                     if html_doc.find('<?php') >= 0:
                         save_user_script_result(self, status, self.base_url + _url, 'WordPress Backup File Found')

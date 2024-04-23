@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import socket
+
 from lib.common import save_user_script_result
 
 
@@ -17,6 +18,6 @@ def do_check(self, url):
         data = s.recv(1024)
         s.close()
         if "redis_version" in data:
-            save_user_script_result(self, '', 'redis://' + host + ':6379', 'Redis Unauthorized Access' )
+            save_user_script_result(self, '', 'redis://' + host + ':6379', 'Redis Unauthorized Access')
     except Exception as e:
         s.close()

@@ -37,7 +37,8 @@ def do_check(self, url):
            'Content-Disposition: form-data; name="image1"\r\n' \
            'Content-Type: text/plain; charset=utf-8\r\n\r\ntest\r\n--40a1f31a0ec74efaa46d53e9f4311353--\r\n'
     try:
-        html = self.conn_pool.urlopen(method='POST', url=self.base_url + '/' + url, body=data, headers=headers, retries=1).data
+        html = self.conn_pool.urlopen(method='POST', url=self.base_url + '/' + url, body=data, headers=headers,
+                                      retries=1).data
         if html.find('LOGNAME=') >= 0:
             save_user_script_result(self, '', self.base_url + '/' + url, 'Struts2 s02-45 Remote Code Execution')
     except Exception as e:

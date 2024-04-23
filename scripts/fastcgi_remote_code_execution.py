@@ -1,5 +1,6 @@
 #
 import socket
+
 from lib.common import save_user_script_result
 
 
@@ -34,7 +35,6 @@ def test_fastcgi(ip):
         return False, None
     finally:
         sock.close()
-
 
 
 def do_check(self, url):

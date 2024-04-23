@@ -2,7 +2,9 @@
 # coding=utf-8
 
 import socket
+
 import requests
+
 requests.packages.urllib3.disable_warnings()
 from lib.common import save_user_script_result
 

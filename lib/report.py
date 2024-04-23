@@ -46,7 +46,6 @@ html = {
     'suffix': '.html'
 }
 
-
 # template for markdown
 markdown_general = """
 # BBScan Report 
@@ -70,7 +69,6 @@ markdown = {
     'list_item': markdown_list_item,
     'suffix': '.md'
 }
-
 
 # summary
 template = {

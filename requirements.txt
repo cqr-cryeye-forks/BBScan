@@ -1,6 +1,5 @@
-BeautifulSoup4>=4.3.2
-py2-ipaddress>=3.4.1
-dnspython>=1.15.0
-urllib3
-pymongo
-requests
+BeautifulSoup4==4.12.3
+dnspython==2.6.1
+urllib3==2.2.1
+pymongo==4.6.3
+requests==2.31.0

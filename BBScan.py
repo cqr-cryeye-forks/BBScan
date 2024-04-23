@@ -4,43 +4,46 @@
 # my[at]lijiejie.com    http://www.lijiejie.com
 
 
-import Queue
-import logging
-import re
-import threading
-from bs4 import BeautifulSoup
-import multiprocessing
-import time
-from string import Template
-import glob
-import ipaddress
-import os
-import webbrowser
-import socket
-import sys
-import ssl
 import codecs
-import traceback
-import struct
+import glob
 import importlib
-from dns.resolver import Resolver
-from lib.common import print_msg, parse_url, decode_response_text, cal_depth, get_domain_sub
-from lib.cmdline import parse_args
-from lib.report import template
-from lib.connectionPool import HTTPConnPool, HTTPSConnPool
+import ipaddress
+import json
+import logging
+import multiprocessing
+import os
+import pathlib
+import re
+import socket
+import ssl
+import struct
+import sys
+import threading
+import time
+import traceback
+import webbrowser
+from string import Template
 
+import dns.resolver
+import queue
+from bs4 import BeautifulSoup
+from dns.resolver import Resolver
+
+from extract_data_from_md import extract_data_from_md
+from lib.cmdline import parse_args
+from lib.common import print_msg, parse_url, decode_response_text, cal_depth, get_domain_sub
+from lib.connectionPool import HTTPConnPool, HTTPSConnPool
+from lib.report import template
 
 if hasattr(ssl, '_create_unverified_context'):
     ssl._create_default_https_context = ssl._create_unverified_context
 
-
 socket.setdefaulttimeout(30)
-
 
 USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 ' \
              '(KHTML, like Gecko) Chrome/38.0.2125.111 Safari/537.36 BBScan/1.3'
 
-headers = {'User-Agent': USER_AGENT, 'Connection': 'Keep-Alive','Range': 'bytes=0-10240'}
+headers = {'User-Agent': USER_AGENT, 'Connection': 'Keep-Alive', 'Range': 'bytes=0-10240'}
 headers_without_range = {'User-Agent': USER_AGENT, 'Connection': 'Keep-Alive'}
 
 
@@ -55,12 +58,11 @@ class InfoDisScanner(object):
         self._init_rules()
         self._init_scripts()
 
-        self.url_queue = Queue.Queue()  # all urls to scan
+        self.url_queue = queue.Queue()  # all urls to scan
         self.urls_processed = set()  # processed urls
         self.urls_enqueued = set()  # entered queue urls
 
         self.lock = threading.Lock()
-
 
     # reset scanner
     def init_reset(self):
@@ -72,7 +74,7 @@ class InfoDisScanner(object):
         self.log_file = None
         self._404_status = -1
         self.conn_pool = None
-        self.index_status, self.index_headers, self.index_html_doc = None, {} , ''
+        self.index_status, self.index_headers, self.index_html_doc = None, {}, ''
 
     # scan from a given URL
     def init_from_url(self, url):
@@ -111,7 +113,7 @@ class InfoDisScanner(object):
             self.base_url = '%s://%s:%s' % (self.schema, self.host, self.port)
 
         is_port_open = self.is_port_open()
-        if  is_port_open:
+        if is_port_open:
             if self.schema == 'https':
                 self.conn_pool = HTTPSConnPool(self.host, port=self.port, maxsize=self.args.t * 2, headers=headers)
             else:
@@ -133,7 +135,7 @@ class InfoDisScanner(object):
             self._404_status = 404
             self.has_404 = True
         else:
-            self.check_404()    # check existence of HTTP 404
+            self.check_404()  # check existence of HTTP 404
         if not self.has_404:
             print_msg('[Warning] %s has no HTTP 404.' % self.host)
         _path, _depth = cal_depth(self, self.path)
@@ -181,13 +183,13 @@ class InfoDisScanner(object):
         self.rules_set = set()
 
         p_tag = re.compile('{tag="(.*?)"}')
-        p_status = re.compile('{status=(\d{3})}')
+        p_status = re.compile(r'{status=(\d{3})}')
         p_content_type = re.compile('{type="(.*?)"}')
         p_content_type_no = re.compile('{type_no="(.*?)"}')
 
         for rule_file in glob.glob('rules/*.txt'):
             with open(rule_file, 'r') as infile:
-                for url in infile.xreadlines():
+                for url in infile:
                     url = url.strip()
                     if url.startswith('/'):
                         _ = p_tag.search(url)
@@ -208,7 +210,8 @@ class InfoDisScanner(object):
                         if rule not in self.rules_set:
                             self.rules_set.add(rule)
                         else:
-                            print 'Dumplicated Rule:', rule
+                            print
+                            'Dumplicated Rule:', rule
 
         re_text = re.compile('{text="(.*)"}')
         re_regex_text = re.compile('{regex_text="(.*)"}')
@@ -222,15 +225,27 @@ class InfoDisScanner(object):
                 continue
             _m = re_text.search(line)
             if _m:
-                self.text_to_find.append(
-                    _m.group(1).decode('utf-8', 'ignore')
-                )
+                # TODO:
+                try:
+                    self.text_to_find.append(
+                        _m.group(1).decode('utf-8', 'ignore')
+                    )
+                except AttributeError:
+                    self.text_to_find.append(
+                        _m.group(1)
+                    )
             else:
                 _m = re_regex_text.search(line)
                 if _m:
-                    self.regex_to_find.append(
-                        re.compile(_m.group(1).decode('utf-8', 'ignore'))
-                    )
+                    # TODO:
+                    try:
+                        self.regex_to_find.append(
+                            re.compile(_m.group(1).decode('utf-8', 'ignore'))
+                        )
+                    except AttributeError:
+                        self.regex_to_find.append(
+                            _m.group(1)
+                        )
 
         _file_path = 'rules/black.list'
         if not os.path.exists(_file_path):
@@ -241,23 +256,35 @@ class InfoDisScanner(object):
                 continue
             _m = re_text.search(line)
             if _m:
-                self.text_to_exclude.append(
-                    _m.group(1).decode('utf-8', 'ignore')
-                )
+                # TODO:
+                try:
+                    self.text_to_exclude.append(
+                        _m.group(1).decode('utf-8', 'ignore')
+                    )
+                except AttributeError:
+                    self.text_to_exclude.append(
+                        _m.group(1)
+                    )
             else:
                 _m = re_regex_text.search(line)
                 if _m:
-                    self.regex_to_exclude.append(
-                        re.compile(_m.group(1).decode('utf-8', 'ignore'))
-                    )
+                    # TODO:
+                    try:
+                        self.regex_to_exclude.append(
+                            re.compile(_m.group(1).decode('utf-8', 'ignore'))
+                        )
+                    except AttributeError:
+                        self.regex_to_exclude.append(
+                            _m.group(1)
+                        )
 
     #
     def _init_scripts(self):
         self.user_scripts = []
-        if self.args.no_scripts:    # disable user scripts scan
+        if self.args.no_scripts:  # disable user scripts scan
             return
         for _script in glob.glob('scripts/*.py'):
-            script_name =  os.path.basename(_script).replace('.py', '')
+            script_name = os.path.basename(_script).replace('.py', '')
             if script_name.startswith('_'):
                 continue
             try:
@@ -305,7 +332,7 @@ class InfoDisScanner(object):
     def _enqueue(self, url):
         try:
             url = str(url)
-            url_pattern = re.sub('\d+', '{num}', url)
+            url_pattern = re.sub(r'\d+', '{num}', url)
             if url_pattern in self.urls_processed or len(self.urls_processed) >= self.LINKS_LIMIT:
                 return False
             else:
@@ -332,7 +359,8 @@ class InfoDisScanner(object):
                 self.url_queue.put((_, url))
             return True
         except Exception as e:
-            print '[_enqueue.exception] %s' % str(e)
+            print
+            '[_enqueue.exception] %s' % str(e)
             return False
 
     #
@@ -345,7 +373,7 @@ class InfoDisScanner(object):
                     html_doc = decode_response_text(html_doc)
                 except Exception as e:
                     pass
-            self.index_status, self.index_headers, self.index_html_doc = status, headers, html_doc    # save index content
+            self.index_status, self.index_headers, self.index_html_doc = status, headers, html_doc  # save index content
             soup = BeautifulSoup(html_doc, "html.parser")
             for link in soup.find_all('a'):
                 url = link.get('href', '').strip()
@@ -377,22 +405,27 @@ class InfoDisScanner(object):
             logging.error('[load_all_urls_from_log_file Exception] %s' % str(e))
             traceback.print_exc()
 
-    #
     def find_text(self, html_doc):
         for _text in self.text_to_find:
-            if html_doc.find(_text) > 0:
+            if html_doc.find(
+                    _text) > -1:  # Use greater than or equal to -1 to handle cases where _text is found at index 0
                 return True
-        for _regex in self.regex_to_find:
-            if _regex.search(html_doc) > 0:
+        for _regex_pattern in self.regex_to_find:
+            _regex = re.compile(_regex_pattern)
+            if _regex.search(html_doc):  # Check if the result of search() is not None
                 return True
         return False
 
     #
     def find_exclude_text(self, html_doc):
         for _text in self.text_to_exclude:
+            # print(html_doc)
+            # print(_text)
             if html_doc.find(_text) >= 0:
                 return True
         for _regex in self.regex_to_exclude:
+            _regex = re.compile(_regex)
+
             if _regex.search(html_doc):
                 return True
         return False
@@ -409,7 +442,7 @@ class InfoDisScanner(object):
             except:
                 return
             try:
-                if len(item) == 2:    # User Script
+                if len(item) == 2:  # User Script
                     check_func = getattr(item[0], 'do_check')
                     check_func(self, item[1])
                     continue
@@ -445,7 +478,7 @@ class InfoDisScanner(object):
                     continue
 
                 if ('html' in cur_content_type or 'text' in cur_content_type) and \
-                                        0 <= len(html_doc) <= 10:  # text too short
+                        0 <= len(html_doc) <= 10:  # text too short
                     continue
 
                 if cur_content_type.find('image/') >= 0:  # exclude image
@@ -458,7 +491,7 @@ class InfoDisScanner(object):
                     if cur_content_type.find('application/json') >= 0 and not url.endswith('.json'):  # no json
                         continue
 
-                    if status != status_to_match and status != 206: # status in [301, 302, 400, 404, 501, 502, 503, 505]
+                    if status != status_to_match and status != 206:  # status in [301, 302, 400, 404, 501, 502, 503, 505]
                         continue
 
                     if tag:
@@ -489,7 +522,8 @@ class InfoDisScanner(object):
                         if float(_len - self.len_404_doc) / _min > 0.3:
                             valid_item = True
 
-                    if status == 206 and tag == '' and cur_content_type.find('text') < 0 and cur_content_type.find('html') < 0:
+                    if status == 206 and tag == '' and cur_content_type.find('text') < 0 and cur_content_type.find(
+                            'html') < 0:
                         valid_item = True
 
                 if valid_item:
@@ -506,7 +540,8 @@ class InfoDisScanner(object):
                     self.lock.release()
 
                 if len(self.results) >= 10:
-                    print '[Warning] Over 10 vulnerabilities found [%s], seems to be false positives.' % prefix
+                    print
+                    '[Warning] Over 10 vulnerabilities found [%s], seems to be false positives.' % prefix
                     self.url_queue.queue.clear()
             except Exception as e:
                 logging.error('[_scan_worker.Exception][2][%s] %s' % (url, str(e)))
@@ -528,7 +563,8 @@ class InfoDisScanner(object):
                     self.results[key] = self.results[key][:1]
             return '%s:%s' % (self.host, self.port), self.results
         except Exception as e:
-            print '[scan exception] %s' % str(e)
+            print
+            '[scan exception] %s' % str(e)
         self.conn_pool.close()
 
 
@@ -547,14 +583,14 @@ def batch_scan(q_targets, q_results, lock, args):
         else:
             s.init_from_log_file(_file)
 
-
         host, results = s.scan(threads=args.t)
         if results:
             q_results.put((host, results))
             lock.acquire()
             for key in results.keys():
                 for url in results[key]:
-                    print '[+] [%s] %s' % (url['status'], url['url'])
+                    print
+                    '[+] [%s] %s' % (url['status'], url['url'])
             lock.release()
 
 
@@ -627,12 +663,13 @@ def domain_lookup():
             break
         _schema, _host, _path = parse_url(host)
         try:
-            m = re.search('\d+\.\d+\.\d+\.\d+', _host.split(':')[0])
+            m = re.search(r'\d+\.\d+\.\d+\.\d+', _host.split(':')[0])
             if m:
                 q_targets.put({'file': '', 'url': host})
                 ips_to_scan.append(m.group(0))
             else:
-                answers = r.query(_host.split(':')[0])
+                resolver = dns.resolver.Resolver()
+                answers = resolver.resolve(_host.split(':')[0])
                 if answers:
                     q_targets.put({'file': '', 'url': host})
                     for _ in answers:
@@ -652,6 +689,8 @@ if __name__ == '__main__':
         input_files = ['crawler']
     elif args.host:
         input_files = ['hosts']  # several hosts from command line
+    if args.output:
+        output_file = pathlib.Path(args.output)
 
     ips_to_scan = []  # all IPs to scan during current scan
 
@@ -677,7 +716,7 @@ if __name__ == '__main__':
                     q_targets.put({'file': _file, 'url': ''})
 
             else:
-                queue_hosts = Queue.Queue()
+                queue_hosts = queue.Queue()
                 for line in lines:
                     if line.strip():
                         # Works with https://github.com/lijiejie/subDomainsBrute
@@ -726,7 +765,7 @@ if __name__ == '__main__':
             try:
                 while True:
                     q_targets.get_nowait()
-            except:
+            except Exception:
                 pass
 
         except Exception as e:
@@ -734,3 +773,9 @@ if __name__ == '__main__':
             traceback.print_exc()
         time.sleep(0.5)
         STOP_ME = True
+
+        data_dict = extract_data_from_md()
+        json_data = json.dumps(data_dict)
+        output_file.write_text(json_data)
+        print(f"Final results save to {output_file.absolute().as_uri()}")
+

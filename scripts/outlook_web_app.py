@@ -1,7 +1,8 @@
 # Exchange Outlook Web APP
 # /owa/             {status=302}     {tag="/owa/auth/logon.aspx"}
 
-import httplib
+import http.client
+
 from lib.common import save_user_script_result
 
 
@@ -20,12 +21,12 @@ def do_check(self, url):
                 return
             if redirect_url == 'https://%s/ews/' % self.host:
                 try:
-                    conn = httplib.HTTPSConnection(self.host)
+                    conn = http.client.HTTPSConnection(self.host)
                     conn.request('HEAD', '/ews')
                     if conn.getresponse().status == 401:
                         save_user_script_result(self, 401, redirect_url, 'OutLook Web APP Found')
                     conn.close()
-                except:
+                except Exception:
                     pass
                 return
 

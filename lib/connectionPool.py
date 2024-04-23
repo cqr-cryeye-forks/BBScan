@@ -1,10 +1,9 @@
-import urllib3
+import logging
 import socket
 import struct
-import logging
-from urllib3.packages.six.moves.queue import Empty
 
-
+import urllib3
+from queue import Empty
 urllib3.disable_warnings()
 logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.CRITICAL)
 
